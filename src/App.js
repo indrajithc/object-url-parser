@@ -4,37 +4,19 @@ import "./App.css";
 
 const App = () => {
   const [userJson, setUserJson] = useState("");
+  const [prefixText, setPrefixText] = useState("");
   const [originalObject, setOriginalObject] = useState({});
   const [encodedUrl, setEncodedUrl] = useState("");
   const [parsedObject, setParsedObject] = useState({});
 
   const separator = "+";
-  const myObject = {
-    brand: ["b1", "b 2", "b3"],
-    price: {
-      min: 0,
-      max: 12,
-      available: {
-        ami: 12,
-        ama: 100,
-        lev: {
-          ddd: "dd",
-          kkk: "fgg",
-        },
-      },
-    },
-    category: ["c1", "c2", "c3"],
-    sort: "asc",
-    size: "12",
-    page: "1",
-  };
 
-  const urlConstructor = (obj, prefix) => {
+  const urlConstructor = (obj, prefix, level = 0) => {
     const str = [];
     const paramConstructor = (k, v) => k + "=" + v;
     for (const p in obj) {
       if (obj.hasOwnProperty(p)) {
-        const k = prefix ? `${prefix}${separator}${p}` : p,
+        const k = prefix ? `${prefix}${level === 0 ? "" : separator}${p}` : p,
           v = obj[p];
         let pv = null;
         if (v !== null && typeof v !== "undefined") {
@@ -50,7 +32,7 @@ const App = () => {
           } else if (typeof v === "string" || typeof v === "number") {
             str.push(paramConstructor(k, v));
           } else if (typeof v === "object" && Object.keys(v).length > 0) {
-            str.push(urlConstructor(v, k));
+            str.push(urlConstructor(v, k, level + 1));
           }
         }
       }
@@ -74,7 +56,7 @@ const App = () => {
           if (ak && ak !== prefix) {
             const valueArray = `${v}`.split(",");
             valuesIn = valueArray.length < 2 ? valueArray[0] : valueArray;
-            const keyArray = `${k}`.split(separator);
+            const keyArray = `${ak}`.split(separator);
             const keyCount = keyArray.length;
             const rootKey = keyArray[0];
             if (keyCount === 1) {
@@ -147,16 +129,35 @@ const App = () => {
   };
 
   useEffect(() => {
+    const myObject = {
+      brand: ["b1", "b 2", "b3"],
+      price: {
+        min: 0,
+        max: 12,
+        available: {
+          ami: 12,
+          ama: 100,
+          lev: {
+            ddd: "dd",
+            kkk: "fgg",
+          },
+        },
+      },
+      category: ["c1", "c2", "c3"],
+      sort: "asc",
+      size: "12",
+      page: "1",
+    };
     setOriginalObject(myObject);
     setUserJson(JSON.stringify(myObject));
-  }, [myObject]);
+  }, []);
 
   useEffect(() => {
-    const urlIn = urlConstructor(originalObject);
+    const urlIn = urlConstructor(originalObject, prefixText);
     setEncodedUrl(urlIn);
-    const objectIn = objectConstructor(urlIn);
+    const objectIn = objectConstructor(urlIn, prefixText);
     setParsedObject(objectIn);
-  }, [originalObject]);
+  }, [originalObject, prefixText]);
 
   const setNewObject = (event) => {
     if (event && event.target) {
@@ -167,6 +168,10 @@ const App = () => {
       } catch (error) {}
       setUserJson(value);
     }
+  };
+
+  const prefixChange = (event) => {
+    setPrefixText(`${event?.target?.value}`.replace(" ", "_"));
   };
 
   return (
@@ -189,6 +194,16 @@ const App = () => {
         <h4 style={{ margin: "auto" }}>
           User input <small>update json </small>
         </h4>
+        <input
+          type="text"
+          value={prefixText}
+          onChange={prefixChange}
+          style={{
+            width: "40%",
+            margin: "auto",
+          }}
+          placeholder="prefix"
+        />
         <textarea
           rows="2"
           style={{ width: "60%", margin: "auto" }}
