@@ -11,6 +11,7 @@
  */
 
 import { useHistory } from "react-router-dom";
+import { useEffect, useCallback, useState } from "react";
 
 const useUrlParser = (inputs) => {
   const urlQuery = (inputs && inputs.urlQuery) || "";
@@ -18,7 +19,10 @@ const useUrlParser = (inputs) => {
   const prefix = (inputs && inputs.prefix) || undefined;
 
   const history = useHistory();
-  let urlObject = {};
+  const queryString =
+    urlQuery || (history && history.location && history.location.search) || "";
+  let thisObject = {};
+  const [urlObject, setUrlObject] = useState({});
 
   /**
    * This function is used to parse object into url
@@ -59,92 +63,95 @@ const useUrlParser = (inputs) => {
   };
 
   /**
-   *
+   * this function is ud to construct object from url
    * @param {String} ua
    * @param {String} pi
    */
-  const objectConstructor = (ua, pi = prefix) => {
-    const obj = {};
-    try {
-      const pfx = pi ? `${pi}` : undefined;
-      const qryStr = `${ua}`.split("?").pop();
-      const qbo = qryStr.split("&");
-      qbo.forEach((val) => {
-        const par = val.split("=");
-        if (par.length > 1) {
-          const k = decodeURIComponent(par[0]);
-          const v = decodeURIComponent(par[1]);
-          let vIn = undefined;
-          if ((pfx && k.indexOf(pfx) === 0) || !pfx) {
-            const ak = k.split(pfx).pop();
-            if (ak && ak !== pfx) {
-              const vr = `${v}`.split(",");
-              vIn = vr.length < 2 ? vr[0] : vr;
-              const ka = `${ak}`.split(separator);
-              const kc = ka.length;
-              const rk = ka[0];
-              if (kc === 1) {
-                if (rk) {
-                  obj[rk] = vIn;
-                }
-              } else if (kc > 1) {
-                let cao = vIn;
-                for (let t = kc; t > 0; t--) {
-                  const eachKey = ka[t - 1];
-                  cao = { [eachKey]: cao };
-                }
-                let objKeyIn = obj[rk];
+  const objectConstructor = useCallback(
+    (ua, pi = prefix) => {
+      const obj = {};
+      try {
+        const pfx = pi ? `${pi}` : undefined;
+        const qryStr = `${ua}`.split("?").pop();
+        const qbo = qryStr.split("&");
+        qbo.forEach((val) => {
+          const par = val.split("=");
+          if (par.length > 1) {
+            const k = decodeURIComponent(par[0]);
+            const v = decodeURIComponent(par[1]);
+            let vIn = undefined;
+            if ((pfx && k.indexOf(pfx) === 0) || !pfx) {
+              const ak = k.split(pfx).pop();
+              if (ak && ak !== pfx) {
+                const vr = `${v}`.split(",");
+                vIn = vr.length < 2 ? vr[0] : vr;
+                const ka = `${ak}`.split(separator);
+                const kc = ka.length;
+                const rk = ka[0];
+                if (kc === 1) {
+                  if (rk) {
+                    obj[rk] = vIn;
+                  }
+                } else if (kc > 1) {
+                  let cao = vIn;
+                  for (let t = kc; t > 0; t--) {
+                    const eachKey = ka[t - 1];
+                    cao = { [eachKey]: cao };
+                  }
+                  let objKeyIn = obj[rk];
 
-                if (cao && Object.keys(cao).length > 0) {
-                  if (objKeyIn) {
-                    const oM = (b, m) => {
-                      let im = { ...b };
-                      if (
-                        b &&
-                        m &&
-                        Object.keys(b).length > 0 &&
-                        Object.keys(m).length > 0
-                      ) {
-                        const bk = Object.keys(b);
-                        Object.keys(m).forEach((emk) => {
-                          if (bk.includes(emk)) {
-                            const mm = oM(b[emk], m[emk]);
-                            im[emk] = {
-                              ...b[emk],
-                              ...mm,
-                            };
-                          } else {
-                            im = { ...b, ...m };
-                          }
-                        });
-                      } else {
-                        im = { ...b, ...m };
-                      }
-                      return im;
-                    };
-                    obj[rk] = {
-                      ...objKeyIn,
-                      ...cao[rk],
-                    };
-                    const mo = oM(objKeyIn, cao[rk]);
-                    obj[rk] = {
-                      ...obj[rk],
-                      ...mo,
-                    };
-                  } else {
-                    obj[rk] = cao[rk];
+                  if (cao && Object.keys(cao).length > 0) {
+                    if (objKeyIn) {
+                      const oM = (b, m) => {
+                        let im = { ...b };
+                        if (
+                          b &&
+                          m &&
+                          Object.keys(b).length > 0 &&
+                          Object.keys(m).length > 0
+                        ) {
+                          const bk = Object.keys(b);
+                          Object.keys(m).forEach((emk) => {
+                            if (bk.includes(emk)) {
+                              const mm = oM(b[emk], m[emk]);
+                              im[emk] = {
+                                ...b[emk],
+                                ...mm,
+                              };
+                            } else {
+                              im = { ...b, ...m };
+                            }
+                          });
+                        } else {
+                          im = { ...b, ...m };
+                        }
+                        return im;
+                      };
+                      obj[rk] = {
+                        ...objKeyIn,
+                        ...cao[rk],
+                      };
+                      const mo = oM(objKeyIn, cao[rk]);
+                      obj[rk] = {
+                        ...obj[rk],
+                        ...mo,
+                      };
+                    } else {
+                      obj[rk] = cao[rk];
+                    }
                   }
                 }
               }
             }
           }
-        }
-      });
-    } catch (error) {
-      obj.error = error;
-    }
-    return obj;
-  };
+        });
+      } catch (error) {
+        obj.error = error;
+      }
+      return obj;
+    },
+    [prefix, separator],
+  );
 
   /**
    * This function is to change route
@@ -196,36 +203,37 @@ const useUrlParser = (inputs) => {
   };
 
   // setting functions in hook component
-  urlObject.objectConstructor = objectConstructor;
-  urlObject.urlConstructor = urlConstructor;
+  thisObject.objectConstructor = objectConstructor;
+  thisObject.urlConstructor = urlConstructor;
 
-  try {
-    if (history) {
-      const queryString =
-        urlQuery || (history.location && history.location.search) || "";
-      const search = `${queryString}`.split("?").pop();
-
-      if (search) {
-        urlObject.object = objectConstructor(search);
+  useEffect(() => {
+    try {
+      if (queryString) {
+        const search = `${queryString}`.split("?").pop();
+        if (search) {
+          setUrlObject({
+            object: objectConstructor(search),
+          });
+        }
       }
+    } catch (error) {
+      setUrlObject({ error });
     }
+  }, [queryString, objectConstructor]);
+
+  try {
+    thisObject.push = localPush;
   } catch (error) {
-    urlObject.error = error;
+    thisObject.error = error;
   }
 
   try {
-    urlObject.push = localPush;
+    thisObject.replace = localReplace;
   } catch (error) {
-    urlObject.error = error;
+    thisObject.error = error;
   }
 
-  try {
-    urlObject.replace = localReplace;
-  } catch (error) {
-    urlObject.error = error;
-  }
-
-  return urlObject;
+  return { ...thisObject, ...urlObject };
 };
 
 export default useUrlParser;
