@@ -152,18 +152,21 @@ const useUrlParser = (inputs) => {
    */
   const localPush = (oi) => {
     try {
+      let rs = { ...oi };
       let search = "";
-
-      if (
-        oi &&
-        oi.query &&
-        typeof oi.query === "object" &&
-        Object.keys(oi.query).length > 0
-      ) {
-        search = urlConstructor(oi) || "";
+      if (oi) {
+        const { query, ...rest } = oi;
+        if (
+          query &&
+          typeof query === "object" &&
+          Object.keys(query).length > 0
+        ) {
+          search = urlConstructor(query) || "";
+          rs = rest;
+        }
       }
       history.push({
-        ...oi,
+        ...rs,
         search,
       });
     } catch (error) {}
