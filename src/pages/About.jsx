@@ -10,7 +10,22 @@
  * @author Indrajith C
  */
 import React from "react";
+import UrlObjectViewer from "../common/UrlObjectViewer";
 
 export default () => {
-  return <h2>About</h2>;
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        flexDirection: "column",
+      }}
+    >
+      <div style={{ margin: `2rem 0` }}>
+        <h2>About</h2>
+        <UrlObjectViewer />
+      </div>
+    </div>
+  );
 };
