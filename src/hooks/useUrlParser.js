@@ -198,13 +198,11 @@ const useUrlParser = (inputs) => {
 
   try {
     if (history) {
-      console.log(history);
       const queryString =
         urlQuery || (history.location && history.location.search) || "";
       const search = `${queryString}`.split("?").pop();
 
       if (search) {
-        console.log(search);
         urlObject.object = objectConstructor(search);
       }
     }
