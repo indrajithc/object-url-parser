@@ -48,7 +48,7 @@ export default () => {
   useEffect(() => {
     const urlIn = urlParser.urlConstructor(originalObject, prefixText);
     setEncodedUrl(urlIn);
-  }, [originalObject, prefixText]);
+  }, [urlParser, originalObject, prefixText]);
 
   const prefixChange = (event) => {
     setPrefixText(`${event?.target?.value}`.replace(" ", "_"));
@@ -128,6 +128,7 @@ export default () => {
             rows="10"
             style={{ width: "90%", height: "50%" }}
             value={encodedUrl}
+            readOnly
           ></textarea>
         </div>
       </div>
